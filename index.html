@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Controle" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f172a'/%3E%3Ctext x='32' y='44' font-size='30' font-family='Arial,sans-serif' font-weight='bold' fill='%234ade80' text-anchor='middle'%3ER$%3C/text%3E%3C/svg%3E" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icone-192.png" />
+  <title>Meu Controle Financeiro</title>
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --surface-alt: #f8fafc;
+      --primary: #0f172a;
+      --accent: #16a34a;
+      --accent-light: #dcfce7;
+      --accent-dark: #166534;
+      --warn: #d97706;
+      --warn-light: #fef3c7;
+      --danger: #dc2626;
+      --danger-light: #fee2e2;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body { background: var(--bg); color: var(--text); padding-bottom: 40px; line-height: 1.4; }
+    button { font-family: inherit; }
+    .hidden { display: none !important; }
+    .container { max-width: 540px; margin: 0 auto; }
+
+    .app-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #fff;
+      padding: 18px 16px 24px;
+      border-bottom-left-radius: 24px;
+      border-bottom-right-radius: 24px;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.15);
+      transition: padding-bottom 0.2s;
+    }
+
+    .app-header.compact { padding-bottom: 10px; }
+    .app-header.compact .tabs { margin-bottom: 4px; }
+
+    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .header-top h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; }
+
+    .offline-badge {
+      background: rgba(34, 197, 94, 0.2);
+      color: #86efac;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(134, 239, 172, 0.3);
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+    }
+
+    .tab {
+      border: none;
+      background: transparent;
+      color: #cbd5e1;
+      padding: 10px;
+      border-radius: 9px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .tab.active { background: #fff; color: var(--primary); }
+
+    .month-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+
+    .month-nav button {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .month-nav .month-label {
+      flex: 1;
+      width: auto;
+      border: none;
+      background: none;
+      font-size: 1rem;
+    }
+
+    .hero-card { background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: var(--radius); padding: 16px; }
+    .hero-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: #cbd5e1; margin-bottom: 4px; }
+    .hero-value { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 6px; }
+    .hero-value.safe { color: #4ade80; }
+    .hero-value.warn { color: #fbbf24; }
+    .hero-value.danger { color: #f87171; }
+    .hero-value.neutral { color: #e2e8f0; }
+    .hero-sub { font-size: 0.82rem; color: #e2e8f0; margin-bottom: 12px; }
+    .progress-track { width: 100%; height: 10px; background: rgba(255, 255, 255, 0.15); border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 999px; transition: width 0.3s ease, background-color 0.3s ease; }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 16px; margin-top: -14px; }
+    .kpi-box { background: var(--surface); border-radius: 14px; padding: 12px 6px; text-align: center; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06); border: 1px solid var(--border); min-width: 0; }
+    .kpi-box span { display: block; font-size: 0.7rem; font-weight: 600; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+    .kpi-box strong { font-size: 0.9rem; font-weight: 700; overflow-wrap: anywhere; }
+
+    .text-in { color: var(--accent); }
+    .text-out { color: var(--danger); }
+
+    .section { padding: 16px 16px 0; }
+    .section.first { padding-top: 16px; }
+
+    .notice { background: var(--warn-light); border: 1px solid #fde68a; color: #92400e; font-size: 0.8rem; padding: 10px 12px; border-radius: 12px; margin-bottom: 12px; }
+    .notice.info { background: #e0f2fe; border-color: #bae6fd; color: #075985; }
+    .notice.error { background: var(--danger-light); border-color: #fecaca; color: #991b1b; }
+
+    .card { background: var(--surface); border-radius: var(--radius); padding: 16px; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04); border: 1px solid var(--border); }
+    .card-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+
+    .type-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; background: var(--bg); padding: 4px; border-radius: 12px; }
+    .type-btn { border: none; padding: 11px; border-radius: 9px; font-weight: 700; font-size: 0.88rem; cursor: pointer; background: transparent; color: var(--muted); transition: all 0.2s; }
+    .type-btn.active-expense { background: var(--danger); color: #fff; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25); }
+    .type-btn.active-income { background: var(--accent); color: #fff; box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25); }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .form-row > div { min-width: 0; }
+    .field { margin-bottom: 12px; }
+
+    label, .lbl { display: block; font-size: 0.76rem; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+
+    input[type=text], input[type=date] {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 1rem;
+      background: var(--surface-alt);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus { border-color: var(--primary); background: #fff; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      border: 1.5px solid var(--border);
+      background: var(--surface-alt);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+    .check-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 0.84rem; color: var(--text); font-weight: 500; cursor: pointer; }
+    .check-row input { width: 18px; height: 18px; accent-color: var(--primary); }
+
+    .btn-submit { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--primary); color: #fff; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+    .btn-submit:active { transform: scale(0.98); }
+    .btn-cancel { width: 100%; padding: 11px; margin-top: 8px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--muted); font-weight: 600; cursor: pointer; }
+
+    .meta-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--accent-light); border: 1px solid #bbf7d0; padding: 10px 14px; border-radius: 12px; margin-bottom: 14px; }
+    .meta-bar span { font-size: 0.82rem; font-weight: 700; color: var(--accent-dark); }
+    .meta-input-wrap { display: flex; align-items: center; gap: 4px; }
+    .meta-input-wrap input { width: 100px; padding: 6px 8px; font-weight: 700; text-align: right; background: #fff; border-color: #86efac; }
+
+    .cat-list { display: flex; flex-direction: column; gap: 10px; }
+    .cat-item-top { display: flex; justify-content: space-between; gap: 8px; font-size: 0.84rem; margin-bottom: 4px; }
+    .cat-bar-bg { height: 7px; background: var(--bg); border-radius: 999px; overflow: hidden; }
+    .cat-bar-fill { height: 100%; background: var(--primary); border-radius: 999px; }
+
+    .filter-pills { display: flex; gap: 6px; margin-bottom: 12px; }
+    .pill { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-alt); font-size: 0.78rem; font-weight: 600; color: var(--muted); cursor: pointer; }
+    .pill.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    .month-group { margin-bottom: 16px; }
+    .month-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 2px solid var(--border); }
+    .month-head strong { font-size: 0.92rem; }
+    .month-head span { font-size: 0.74rem; color: var(--muted); }
+
+    .tx-list { display: flex; flex-direction: column; gap: 8px; }
+    .tx-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 12px; background: var(--surface-alt); border-radius: 12px; border: 1px solid var(--border); }
+    .tx-item.editing { border-color: var(--primary); background: #fff; }
+    .tx-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .tx-desc { font-size: 0.9rem; font-weight: 600; overflow-wrap: anywhere; }
+    .tx-meta { font-size: 0.74rem; color: var(--muted); }
+    .tag { display: inline-block; font-size: 0.62rem; font-weight: 700; text-transform: uppercase; background: #e0e7ff; color: #3730a3; padding: 1px 6px; border-radius: 999px; vertical-align: middle; margin-left: 4px; }
+    .tx-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .tx-val { font-size: 0.9rem; font-weight: 700; white-space: nowrap; margin-right: 2px; }
+    .btn-icon, .btn-del { border: none; width: 30px; height: 30px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; }
+    .btn-icon { background: #e2e8f0; color: var(--primary); }
+    .btn-del { background: var(--danger-light); color: var(--danger); }
+
+    .actions-footer { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn-secondary { flex: 1 1 140px; padding: 11px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+    .btn-secondary.primary { background: var(--primary); color: #fff; border-color: var(--primary); flex-basis: 100%; }
+    .btn-link { display: block; margin: 14px auto 0; background: none; border: none; color: var(--muted); font-size: 0.74rem; text-decoration: underline; cursor: pointer; }
+    .empty-msg { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 16px 0; }
+
+    /* no celular, alvos de toque maiores */
+    @media (max-width: 480px) {
+      .btn-icon, .btn-del { width: 38px; height: 38px; font-size: 1.05rem; }
+      .tx-right { gap: 8px; }
+      .tx-val { font-size: 0.86rem; }
+      .pill { padding: 9px 14px; }
+    }
+    .help { font-size: 0.76rem; color: var(--muted); margin-bottom: 10px; }
+
+    .link-status { display: flex; gap: 10px; align-items: flex-start; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; padding: 11px 12px; margin-bottom: 12px; }
+    .link-status .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); margin-top: 5px; flex-shrink: 0; }
+    .link-status.on { background: var(--accent-light); border-color: #bbf7d0; }
+    .link-status.on .dot { background: var(--accent); }
+    .link-status.attention { background: var(--warn-light); border-color: #fde68a; }
+    .link-status.attention .dot { background: var(--warn); }
+    .link-status strong { display: block; font-size: 0.85rem; margin-bottom: 2px; }
+    .link-status small { display: block; font-size: 0.76rem; color: var(--muted); overflow-wrap: anywhere; }
+    .link-status.on small { color: var(--accent-dark); }
+
+    .modal-bg { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+    .modal { background: #fff; border-radius: 18px; padding: 20px; width: 100%; max-width: 360px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); }
+    .modal h3 { font-size: 1.05rem; margin-bottom: 8px; }
+    .modal p { font-size: 0.88rem; color: var(--muted); margin-bottom: 16px; }
+    .modal-actions { display: flex; gap: 8px; }
+    .modal-actions button { flex: 1; padding: 11px; border-radius: 10px; border: 1px solid var(--border); background: #fff; font-weight: 700; cursor: pointer; }
+    .modal-actions button.ok { background: var(--danger); border-color: var(--danger); color: #fff; }
+    .modal-actions button.ok.neutral { background: var(--primary); border-color: var(--primary); }
+
+    .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--primary); color: #fff; padding: 12px 16px; border-radius: 12px; font-size: 0.85rem; display: flex; align-items: center; gap: 14px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25); z-index: 60; max-width: calc(100% - 32px); }
+    .toast button { background: none; border: none; color: #86efac; font-weight: 700; cursor: pointer; font-size: 0.85rem; white-space: nowrap; }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="container">
+      <div class="header-top">
+        <h1>Controle Financeiro</h1>
+        <span class="offline-badge">● Dados no seu aparelho</span>
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" id="tabLancar" data-tab="lancar" role="tab">Lançar</button>
+        <button type="button" class="tab" id="tabHistorico" data-tab="historico" role="tab">Histórico</button>
+      </div>
+
+      <div id="heroWrap">
+        <div class="month-nav">
+          <button type="button" id="btnPrevMonth" aria-label="Mês anterior">‹</button>
+          <button type="button" id="monthLabel" class="month-label" title="Voltar para o mês atual"></button>
+          <button type="button" id="btnNextMonth" aria-label="Próximo mês">›</button>
+        </div>
+
+        <div class="hero-card">
+          <div class="hero-label">Quanto você ainda pode gastar no mês</div>
+          <div id="safeMarginValue" class="hero-value neutral">R$ 0,00</div>
+          <div id="heroSubtitle" class="hero-sub"></div>
+          <div class="progress-track"><div id="budgetProgress" class="progress-fill" style="width:0%;background:#4ade80;"></div></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div id="errorBox" class="section hidden"><div class="notice error" id="errorText"></div></div>
+    <div id="storageNotice" class="section hidden">
+      <div class="notice">⚠️ Este navegador não permite salvar automaticamente. Na aba <strong>Histórico</strong>, use <strong>Salvar dados no HTML</strong> antes de fechar a página.</div>
+    </div>
+
+    <!-- ===== ABA LANÇAR ===== -->
+    <div id="panelLancar">
+      <div class="kpi-grid">
+        <div class="kpi-box"><span>Entradas</span><strong id="kpiIncome" class="text-in">R$ 0,00</strong></div>
+        <div class="kpi-box"><span>Saídas</span><strong id="kpiExpense" class="text-out">R$ 0,00</strong></div>
+        <div class="kpi-box"><span>Sobra Atual</span><strong id="kpiSavings">R$ 0,00</strong></div>
+      </div>
+
+      <div class="section">
+        <div class="card" id="txForm">
+          <div class="card-title"><span id="formTitle">Novo Lançamento</span></div>
+
+          <div class="type-toggle">
+            <button type="button" id="btnTypeExpense" class="type-btn active-expense">− Saída (Gasto)</button>
+            <button type="button" id="btnTypeIncome" class="type-btn">+ Entrada</button>
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label for="txAmount">Valor (R$)</label>
+              <input type="text" id="txAmount" placeholder="0,00" inputmode="decimal" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+            </div>
+            <div>
+              <label for="txDate">Data</label>
+              <input type="date" id="txDate" autocomplete="off" />
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="lbl">Categoria</span>
+            <div class="chips" id="catChips"></div>
+          </div>
+
+          <div class="field">
+            <label for="txDesc">Descrição (opcional)</label>
+            <input type="text" id="txDesc" placeholder="Ex: Almoço, Mercado..." maxlength="80" autocomplete="off" />
+          </div>
+
+          <label class="check-row">
+            <input type="checkbox" id="txFixed" />
+            Repetir todo mês (conta/renda fixa)
+          </label>
+
+          <button type="button" id="btnSubmit" class="btn-submit">Salvar Lançamento</button>
+          <button type="button" id="btnCancelEdit" class="btn-cancel hidden">Cancelar edição</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="card">
+          <div class="meta-bar">
+            <span>Meta de Economia Mensal</span>
+            <div class="meta-input-wrap">
+              <strong>R$</strong>
+              <input type="text" id="goalInput" inputmode="decimal" value="0" autocomplete="off" aria-label="Meta de economia mensal" />
+            </div>
+          </div>
+          <div class="card-title">Gastos por Categoria</div>
+          <div id="categoryBreakdown" class="cat-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ABA HISTÓRICO ===== -->
+    <div id="panelHistorico" class="hidden">
+      <div class="section first">
+        <div class="card">
+          <div class="card-title">
+            <span>Todos os lançamentos</span>
+            <span id="txCount" style="font-size:0.78rem;color:var(--muted);font-weight:500;">0 itens</span>
+          </div>
+
+          <div class="filter-pills" id="filterPills">
+            <button type="button" class="pill active" data-filter="all">Todos</button>
+            <button type="button" class="pill" data-filter="expense">Saídas</button>
+            <button type="button" class="pill" data-filter="income">Entradas</button>
+          </div>
+
+          <div id="historyList"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="card">
+          <div class="card-title">Guardar seus dados</div>
+
+          <div class="link-status" id="linkStatus">
+            <span class="dot"></span>
+            <div>
+              <strong id="linkTitle">Salvo só neste navegador</strong>
+              <small id="linkDetail">Vincule um arquivo .html uma vez: depois ele é regravado sozinho, sempre o mesmo arquivo.</small>
+            </div>
+          </div>
+
+          <div class="actions-footer">
+            <button type="button" class="btn-secondary primary" id="btnLinkMain">🔗 Vincular arquivo HTML</button>
+            <button type="button" class="btn-secondary" id="btnExport">⬇ Backup (.json)</button>
+            <button type="button" class="btn-secondary" id="btnImport">⬆ Restaurar backup</button>
+            <button type="button" class="btn-secondary" id="btnNewMonth">Iniciar novo mês ›</button>
+          </div>
+          <input type="file" id="importFile" accept=".json,application/json" class="hidden" />
+          <button type="button" class="btn-link hidden" id="btnUnlink">Desvincular arquivo</button>
+          <button type="button" class="btn-link" id="btnClearAll">Apagar todos os dados</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dados gravados dentro do HTML (preenchido pelo botão "Salvar dados no HTML") -->
+  <script id="dados-embutidos" type="application/json">null</script>
+
+  <script>
+    'use strict';
+
+    const STORAGE_KEY = 'orcamento_pessoal_offline_v1';
+
+    const EXPENSE_CATEGORIES = [
+      'Alimentação', 'Transporte', 'Moradia e Contas', 'Lazer e Estilo de Vida',
+      'Compras e Cuidados', 'Saúde e Bem-Estar', 'Outros'
+    ];
+    const INCOME_CATEGORIES = ['Salário / Renda Principal', 'Renda Extra', 'Reembolso / Outros'];
+
+    const $ = (id) => document.getElementById(id);
+
+    // mostra qualquer erro de script na tela, em vez de falhar em silêncio
+    window.addEventListener('error', (e) => {
+      const box = $('errorBox');
+      if (!box) return;
+      $('errorText').textContent = 'Erro no app: ' + (e.message || 'desconhecido');
+      box.classList.remove('hidden');
+    });
+
+    // nenhuma falha pode passar em silêncio: avisa também em erros assíncronos
+    window.addEventListener('unhandledrejection', (e) => {
+      const r = e.reason;
+      const msg = (r && (r.message || r.name)) || 'erro desconhecido';
+      try { showToast('Falhou: ' + msg); } catch (x) {}
+    });
+
+    // garante que nada fique esperando para sempre
+    function withTimeout(promise, ms, rotulo) {
+      let t;
+      return Promise.race([
+        promise.finally(() => clearTimeout(t)),
+        new Promise((_, rej) => { t = setTimeout(() => rej(new Error('tempo esgotado ao ' + rotulo)), ms); })
+      ]);
+    }
+
+    // ---------- utilidades ----------
+    const r2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, (c) => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+      ));
+    }
+
+    function formatBRL(val) {
+      return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    // aceita "12,50", "12.50", "1.234,56", "R$ 1.234,56", "1.234"
+    function parseMoney(raw) {
+      let s = String(raw == null ? '' : raw).replace(/[R$\s]/g, '');
+      if (!s) return NaN;
+      if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+      else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+      if (!/^\d*\.?\d+$/.test(s)) return NaN;
+      return r2(parseFloat(s));
+    }
+
+    const pad = (n) => String(n).padStart(2, '0');
+    const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+    const monthOf = (iso) => iso.slice(0, 7);
+    const currentMonth = () => monthOf(todayISO());
+
+    function shiftMonth(ym, delta) {
+      const [y, m] = ym.split('-').map(Number);
+      const d = new Date(y, m - 1 + delta, 1);
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+    }
+
+    function daysInMonth(ym) {
+      const [y, m] = ym.split('-').map(Number);
+      return new Date(y, m, 0).getDate();
+    }
+
+    function monthName(ym) {
+      const [y, m] = ym.split('-').map(Number);
+      const name = new Date(y, m - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+
+    function formatDateBR(iso) {
+      const p = (iso || '').split('-');
+      return p.length === 3 ? `${p[2]}/${p[1]}` : iso;
+    }
+
+    let idCounter = 0;
+    const newId = () => Date.now() * 1000 + (idCounter++ % 1000);
+
+    // ---------- estado / armazenamento ----------
+    let storageOk = true;
+
+    function sanitize(data) {
+      const txs = (Array.isArray(data && data.transactions) ? data.transactions : [])
+        .map((t) => ({
+          id: Number.isFinite(Number(t.id)) ? Number(t.id) : newId(),
+          type: t.type === 'income' ? 'income' : 'expense',
+          amount: r2(Number(t.amount)),
+          category: String(t.category || 'Outros'),
+          desc: String(t.desc || t.category || ''),
+          date: /^\d{4}-\d{2}-\d{2}$/.test(String(t.date)) ? String(t.date) : todayISO(),
+          fixed: !!t.fixed
+        }))
+        .filter((t) => Number.isFinite(t.amount) && t.amount > 0);
+      const goal = parseFloat(data && data.savingsGoal);
+      const savedAt = Number(data && data.savedAt);
+      return {
+        savingsGoal: Number.isFinite(goal) && goal > 0 ? r2(goal) : 0,
+        savedAt: Number.isFinite(savedAt) ? savedAt : 0,
+        transactions: txs
+      };
+    }
+
+    // usa o mais recente entre: dados gravados no HTML e dados do navegador
+    function loadState() {
+      let fromLocal = null;
+      let fromHtml = null;
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) fromLocal = sanitize(JSON.parse(saved));
+      } catch (e) { storageOk = false; }
+      try {
+        const emb = JSON.parse($('dados-embutidos').textContent);
+        if (emb && Array.isArray(emb.transactions)) fromHtml = sanitize(emb);
+      } catch (e) { /* sem dados embutidos */ }
+
+      if (fromLocal && fromHtml) return fromLocal.savedAt >= fromHtml.savedAt ? fromLocal : fromHtml;
+      return fromLocal || fromHtml || { savingsGoal: 0, savedAt: 0, transactions: [] };
+    }
+
+    function saveState() {
+      state.savedAt = Date.now();
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        storageOk = false;
+        $('storageNotice').classList.remove('hidden');
+      }
+      scheduleAutoSave();
+    }
+
+    let state = loadState();
+    let viewMonth = currentMonth();
+    let currentType = 'expense';
+    let currentCategory = EXPENSE_CATEGORIES[0];
+    let currentFilter = 'all';
+    let currentTab = 'lancar';
+    let editingId = null;
+
+    // ---------- UI: modal e toast ----------
+    function askConfirm(title, text, okLabel, neutral) {
+      return new Promise((resolve) => {
+        const bg = document.createElement('div');
+        bg.className = 'modal-bg';
+        bg.innerHTML = `
+          <div class="modal" role="dialog" aria-modal="true">
+            <h3>${esc(title)}</h3>
+            <p>${esc(text)}</p>
+            <div class="modal-actions">
+              <button type="button" data-r="0">Cancelar</button>
+              <button type="button" data-r="1" class="ok ${neutral ? 'neutral' : ''}">${esc(okLabel)}</button>
+            </div>
+          </div>`;
+        const done = (v) => { bg.remove(); resolve(v); };
+        bg.addEventListener('click', (e) => {
+          const b = e.target.closest('button[data-r]');
+          if (b) done(b.dataset.r === '1');
+          else if (e.target === bg) done(false);
+        });
+        document.body.appendChild(bg);
+        bg.querySelector('button[data-r="0"]').focus();
+      });
+    }
+
+    let toastTimer = null;
+    function showToast(msg, actionLabel, actionFn) {
+      const old = document.querySelector('.toast');
+      if (old) old.remove();
+      clearTimeout(toastTimer);
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.innerHTML = `<span>${esc(msg)}</span>${actionLabel ? `<button type="button">${esc(actionLabel)}</button>` : ''}`;
+      if (actionLabel) t.querySelector('button').addEventListener('click', () => { actionFn(); t.remove(); });
+      document.body.appendChild(t);
+      toastTimer = setTimeout(() => t.remove(), actionLabel ? 6000 : 3000);
+    }
+
+    // ---------- abas ----------
+    function setTab(tab) {
+      currentTab = tab;
+      $('panelLancar').classList.toggle('hidden', tab !== 'lancar');
+      $('panelHistorico').classList.toggle('hidden', tab !== 'historico');
+      $('heroWrap').classList.toggle('hidden', tab !== 'lancar');
+      document.querySelector('.app-header').classList.toggle('compact', tab !== 'lancar');
+      $('tabLancar').classList.toggle('active', tab === 'lancar');
+      $('tabHistorico').classList.toggle('active', tab === 'historico');
+      window.scrollTo(0, 0);
+    }
+
+    // ---------- formulário ----------
+    function renderChips(extraCategory) {
+      const base = currentType === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+      const list = extraCategory && !base.includes(extraCategory) ? [...base, extraCategory] : base;
+      $('catChips').innerHTML = list.map((c) =>
+        `<button type="button" class="chip${c === currentCategory ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`
+      ).join('');
+    }
+
+    function setEntryType(type, selectedCategory) {
+      currentType = type;
+      const list = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+      currentCategory = selectedCategory || list[0];
+      $('btnTypeExpense').className = 'type-btn' + (type === 'expense' ? ' active-expense' : '');
+      $('btnTypeIncome').className = 'type-btn' + (type === 'income' ? ' active-income' : '');
+      renderChips(selectedCategory);
+    }
+
+    function defaultDateForView() {
+      return viewMonth === currentMonth() ? todayISO() : `${viewMonth}-01`;
+    }
+
+    function resetForm() {
+      editingId = null;
+      $('txAmount').value = '';
+      $('txDesc').value = '';
+      $('txFixed').checked = false;
+      $('txDate').value = defaultDateForView();
+      $('formTitle').textContent = 'Novo Lançamento';
+      $('btnSubmit').textContent = 'Salvar Lançamento';
+      $('btnCancelEdit').classList.add('hidden');
+    }
+
+    function startEdit(id) {
+      const t = state.transactions.find((x) => x.id === id);
+      if (!t) return;
+      editingId = id;
+      setTab('lancar');
+      setEntryType(t.type, t.category);
+      $('txAmount').value = String(t.amount).replace('.', ',');
+      $('txDesc').value = t.desc === t.category ? '' : t.desc;
+      $('txDate').value = t.date;
+      $('txFixed').checked = t.fixed;
+      $('formTitle').textContent = 'Editar Lançamento';
+      $('btnSubmit').textContent = 'Atualizar Lançamento';
+      $('btnCancelEdit').classList.remove('hidden');
+      viewMonth = monthOf(t.date);
+      render();
+      $('txForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function submitTransaction() {
+      const amount = parseMoney($('txAmount').value);
+      const date = $('txDate').value;
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        $('txAmount').focus();
+        showToast('Digite um valor maior que zero (ex: 25,90).');
+        return;
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        $('txDate').focus();
+        showToast('Escolha uma data válida.');
+        return;
+      }
+
+      const tx = {
+        type: currentType,
+        amount,
+        category: currentCategory,
+        desc: $('txDesc').value.trim() || currentCategory,
+        date,
+        fixed: $('txFixed').checked
+      };
+
+      const wasEditing = editingId !== null;
+      if (wasEditing) {
+        const i = state.transactions.findIndex((t) => t.id === editingId);
+        if (i >= 0) state.transactions[i] = { ...tx, id: editingId };
+      } else {
+        state.transactions.push({ ...tx, id: newId() });
+      }
+
+      saveState();
+      viewMonth = monthOf(date);
+      resetForm();
+      $('txDate').value = date;
+      render();
+      showToast(wasEditing ? 'Lançamento atualizado.' : 'Salvo no Histórico.', 'Ver', () => setTab('historico'));
+    }
+
+    // ---------- ações ----------
+    function deleteTransaction(id) {
+      const idx = state.transactions.findIndex((t) => t.id === id);
+      if (idx < 0) return;
+      const [removed] = state.transactions.splice(idx, 1);
+      if (editingId === id) resetForm();
+      saveState();
+      render();
+      showToast('Lançamento excluído.', 'Desfazer', () => {
+        state.transactions.splice(Math.min(idx, state.transactions.length), 0, removed);
+        saveState();
+        render();
+      });
+    }
+
+    function updateGoal() {
+      const parsed = parseMoney($('goalInput').value);
+      state.savingsGoal = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+      saveState();
+      render();
+    }
+
+    function changeMonth(ym) {
+      viewMonth = ym;
+      if (editingId === null) $('txDate').value = defaultDateForView();
+      render();
+    }
+
+    function startNewMonth() {
+      const next = shiftMonth(viewMonth, 1);
+      const fixed = state.transactions.filter((t) => t.fixed && monthOf(t.date) === viewMonth);
+      const existing = state.transactions.filter((t) => monthOf(t.date) === next);
+      let added = 0;
+
+      fixed.forEach((t) => {
+        const dup = existing.some((e) => e.fixed && e.type === t.type && e.category === t.category &&
+          e.desc === t.desc && e.amount === t.amount);
+        if (dup) return;
+        const day = Math.min(Number(t.date.slice(8, 10)), daysInMonth(next));
+        state.transactions.push({ ...t, id: newId(), date: `${next}-${pad(day)}` });
+        added++;
+      });
+
+      saveState();
+      viewMonth = next;
+      $('txDate').value = defaultDateForView();
+      render();
+      showToast(added > 0
+        ? `${added} fixo(s) copiado(s) para ${monthName(next)}.`
+        : 'Sem fixos para copiar. Marque "Repetir todo mês" nos lançamentos recorrentes.');
+    }
+
+    async function downloadBlob(blob, name) {
+      if (capDownloads) {
+        try {
+          await capDownloads.save({ filename: name, data: blob });
+          return true;
+        } catch (e) {
+          showToast(e && e.code === 'declined' ? 'Download cancelado.' : 'Não foi possível baixar aqui.');
+          return false;
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      return true;
+    }
+
+    async function exportBackup() {
+      const ok = await downloadBlob(new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }),
+        `backup_orcamento_${todayISO()}.json`);
+      if (ok) showToast('Backup gerado.');
+    }
+
+    // gera uma cópia deste mesmo HTML com os dados gravados dentro dele
+    function buildHtmlWithData() {
+      const clone = document.documentElement.cloneNode(true);
+      clone.querySelectorAll('.toast, .modal-bg').forEach((n) => n.remove());
+      clone.querySelector('#dados-embutidos').textContent = JSON.stringify(state).replace(/</g, '\\u003c');
+      return '<!DOCTYPE html>\n' + clone.outerHTML;
+    }
+
+    // ---------- arquivo HTML vinculado (sempre o MESMO arquivo) ----------
+    // aberto pelo link publicado? lá o navegador não deixa vincular arquivo
+    const PUBLICADO = !!(window.claude && typeof window.claude.use === 'function');
+    const FS_SUPPORTED = !PUBLICADO && typeof window.showSaveFilePicker === 'function';
+    const LINK_NAME_KEY = 'orcamento_arquivo_vinculado';
+
+    // no link publicado, baixar exige a permissão do visualizador
+    let capDownloads = null;
+    if (PUBLICADO) {
+      window.claude.use('downloads').then((d) => { capDownloads = d; }).catch(() => {});
+    }
+
+    function rememberName(name) {
+      try { name ? localStorage.setItem(LINK_NAME_KEY, name) : localStorage.removeItem(LINK_NAME_KEY); } catch (e) {}
+    }
+    function rememberedName() {
+      try { return localStorage.getItem(LINK_NAME_KEY) || ''; } catch (e) { return ''; }
+    }
+
+    let fileHandle = null;      // arquivo liberado para gravação
+    let pendingHandle = null;   // arquivo lembrado, à espera de permissão
+    let autoSaveTimer = null;
+    let lastSavedLabel = '';
+
+    function currentFileName() {
+      try {
+        const n = decodeURIComponent((location.pathname || '').split('/').pop() || '');
+        if (n && /\.html?$/i.test(n)) return n;
+      } catch (e) {}
+      return 'Meu_Controle_Financeiro.html';
+    }
+
+    // guarda a referência do arquivo para reencontrá-lo na próxima abertura
+    function idbOpen() {
+      return new Promise((resolve, reject) => {
+        let req;
+        try { req = indexedDB.open('controle_financeiro', 1); }
+        catch (e) { return reject(e); }
+        req.onupgradeneeded = () => req.result.createObjectStore('arquivo');
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    // guardar/ler a referência NUNCA pode travar o app: tudo com prazo e conexão fechada
+    async function idbSet(value) {
+      try {
+        await withTimeout((async () => {
+          const db = await idbOpen();
+          try {
+            await new Promise((res, rej) => {
+              const tx = db.transaction('arquivo', 'readwrite');
+              const store = tx.objectStore('arquivo');
+              if (value === null) store.delete('handle'); else store.put(value, 'handle');
+              tx.oncomplete = res;
+              tx.onerror = () => rej(tx.error);
+              tx.onabort = () => rej(tx.error || new Error('transação cancelada'));
+            });
+          } finally { try { db.close(); } catch (x) {} }
+        })(), 2500, 'guardar a referência do arquivo');
+      } catch (e) { /* segue sem lembrar: o vínculo vale nesta aba */ }
+    }
+
+    async function idbGet() {
+      try {
+        return await withTimeout((async () => {
+          const db = await idbOpen();
+          try {
+            return await new Promise((res, rej) => {
+              const tx = db.transaction('arquivo', 'readonly');
+              const r = tx.objectStore('arquivo').get('handle');
+              r.onsuccess = () => res(r.result || null);
+              r.onerror = () => rej(r.error);
+              tx.onabort = () => rej(tx.error || new Error('transação cancelada'));
+            });
+          } finally { try { db.close(); } catch (x) {} }
+        })(), 2500, 'ler a referência do arquivo');
+      } catch (e) { return null; }
+    }
+
+    async function hasPermission(handle, ask) {
+      if (!handle || !handle.queryPermission) return false;
+      const opts = { mode: 'readwrite' };
+      try {
+        if (await handle.queryPermission(opts) === 'granted') return true;
+        if (!ask) return false;
+        return (await handle.requestPermission(opts)) === 'granted';
+      } catch (e) { return false; }
+    }
+
+    // regrava o MESMO arquivo, sem criar cópia
+    async function writeLinkedFile() {
+      if (!fileHandle) return false;
+      const conteudo = buildHtmlWithData();
+      await withTimeout((async () => {
+        const w = await fileHandle.createWritable();
+        await w.write(new Blob([conteudo], { type: 'text/html' }));
+        await w.close();
+      })(), 20000, 'gravar o arquivo');
+      const d = new Date();
+      lastSavedLabel = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      renderLinkStatus();
+      return true;
+    }
+
+    function scheduleAutoSave() {
+      if (!fileHandle) return;
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = setTimeout(() => {
+        writeLinkedFile().catch(() => {
+          fileHandle = null;
+          renderLinkStatus();
+          showToast('Não consegui gravar no arquivo. Vincule-o de novo.');
+        });
+      }, 1000);
+    }
+
+    async function linkFile() {
+      let handle;
+      try {
+        handle = await window.showSaveFilePicker({
+          suggestedName: currentFileName(),
+          types: [{ description: 'Página HTML', accept: { 'text/html': ['.html'] } }]
+        });
+      } catch (e) {
+        if (e && e.name === 'AbortError') return;        // usuário cancelou: normal
+        showToast('Não deu para abrir a janela de arquivo: ' + (e && e.name || 'erro'));
+        return;
+      }
+
+      fileHandle = handle;
+      pendingHandle = null;
+      rememberName(handle.name || currentFileName());
+      renderLinkStatus();
+
+      // grava PRIMEIRO; nada pode ficar na frente disso
+      try {
+        await writeLinkedFile();
+        showToast('Arquivo vinculado. Daqui em diante ele se atualiza sozinho.');
+      } catch (e) {
+        fileHandle = null;
+        renderLinkStatus();
+        showToast('Não consegui gravar neste arquivo: ' + (e && (e.name || e.message) || 'erro'));
+        return;
+      }
+
+      // lembrar o arquivo é um extra: se falhar ou demorar, não afeta o botão
+      idbSet(handle).catch(() => {});
+    }
+
+    async function unlinkFile() {
+      fileHandle = null;
+      pendingHandle = null;
+      lastSavedLabel = '';
+      clearTimeout(autoSaveTimer);
+      rememberName('');
+      renderLinkStatus();
+      showToast('Arquivo desvinculado.');
+      idbSet(null).catch(() => {});
+    }
+
+    async function downloadHtmlCopy() {
+      state.savedAt = Date.now();
+      const ok = await downloadBlob(new Blob([buildHtmlWithData()], { type: 'text/html' }), currentFileName());
+      if (ok) showToast('Cópia .html baixada.');
+    }
+
+    function renderLinkStatus() {
+      const box = $('linkStatus');
+      const btn = $('btnLinkMain');
+      box.classList.remove('on', 'attention');
+      $('btnUnlink').classList.toggle('hidden', !fileHandle && !pendingHandle);
+
+      if (PUBLICADO) {
+        $('linkTitle').textContent = 'Salvo no navegador deste aparelho';
+        $('linkDetail').textContent = 'Seus lançamentos ficam só aqui, neste aparelho. Para levá-los a outro, use Backup (.json) e depois Restaurar backup.';
+        btn.textContent = '⬇ Baixar cópia .html';
+      } else if (!FS_SUPPORTED) {
+        $('linkTitle').textContent = 'Salvo neste navegador';
+        $('linkDetail').textContent = 'Este navegador não deixa regravar um arquivo: cada cópia baixada vira um arquivo novo. No Chrome ou no Edge dá para manter um só.';
+        btn.textContent = '⬇ Baixar cópia .html';
+      } else if (fileHandle) {
+        box.classList.add('on');
+        $('linkTitle').textContent = 'Gravando sozinho neste arquivo';
+        $('linkDetail').textContent = (fileHandle.name || currentFileName()) + (lastSavedLabel ? ` • salvo às ${lastSavedLabel}` : '');
+        btn.textContent = '💾 Salvar agora';
+      } else if (pendingHandle) {
+        box.classList.add('attention');
+        $('linkTitle').textContent = 'Arquivo lembrado, falta liberar';
+        $('linkDetail').textContent = (pendingHandle.name || '') + ' — clique para autorizar a gravação.';
+        btn.textContent = '🔓 Reconectar arquivo';
+      } else if (rememberedName()) {
+        box.classList.add('attention');
+        $('btnUnlink').classList.remove('hidden');
+        $('linkTitle').textContent = 'Reabra o vínculo para gravar';
+        $('linkDetail').textContent = `Da última vez você usou ${rememberedName()}. Escolha o mesmo arquivo de novo: ele é regravado, não duplicado.`;
+        btn.textContent = '🔗 Vincular arquivo HTML';
+      } else {
+        $('linkTitle').textContent = 'Salvo só neste navegador';
+        $('linkDetail').textContent = 'Vincule um arquivo .html uma vez: depois ele é regravado sozinho, sempre o mesmo arquivo.';
+        btn.textContent = '🔗 Vincular arquivo HTML';
+      }
+    }
+
+    async function onLinkMainClick() {
+      if (!FS_SUPPORTED) return downloadHtmlCopy();
+      if (fileHandle) {
+        try { await writeLinkedFile(); showToast('Salvo no arquivo.'); }
+        catch (e) { fileHandle = null; renderLinkStatus(); showToast('Não consegui gravar. Vincule o arquivo de novo.'); }
+        return;
+      }
+      if (pendingHandle) {
+        if (await hasPermission(pendingHandle, true)) {
+          fileHandle = pendingHandle;
+          pendingHandle = null;
+          try { await writeLinkedFile(); showToast('Arquivo reconectado.'); } catch (e) {}
+          renderLinkStatus();
+          return;
+        }
+        showToast('Permissão não concedida.');
+        return;
+      }
+      linkFile();
+    }
+
+    async function restoreLink() {
+      if (!FS_SUPPORTED) return renderLinkStatus();
+      const h = await idbGet();
+      if (h) {
+        if (await hasPermission(h, false)) fileHandle = h;
+        else pendingHandle = h;
+      }
+      renderLinkStatus();
+    }
+
+    function importBackup(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        let data;
+        try {
+          data = JSON.parse(reader.result);
+          if (!data || !Array.isArray(data.transactions)) throw new Error('formato');
+        } catch (err) {
+          showToast('Arquivo inválido. Escolha um backup .json deste app.');
+          return;
+        }
+        const clean = sanitize(data);
+        const ok = await askConfirm(
+          'Restaurar backup?',
+          `Isso substitui seus dados atuais por ${clean.transactions.length} lançamento(s) do arquivo.`,
+          'Restaurar', true
+        );
+        if (!ok) return;
+        state = clean;
+        saveState();
+        resetForm();
+        viewMonth = currentMonth();
+        render();
+        showToast('Backup restaurado.');
+      };
+      reader.onerror = () => showToast('Não foi possível ler o arquivo.');
+      reader.readAsText(file);
+    }
+
+    async function clearAll() {
+      const ok = await askConfirm(
+        'Apagar todos os dados?',
+        'Todos os lançamentos e a meta serão removidos. Salve uma cópia antes se quiser guardar.',
+        'Apagar tudo'
+      );
+      if (!ok) return;
+      state = { savingsGoal: 0, savedAt: 0, transactions: [] };
+      saveState();
+      resetForm();
+      render();
+      showToast('Dados apagados.');
+    }
+
+    // ---------- renderização ----------
+    function txRow(t) {
+      return `
+        <div class="tx-item${t.id === editingId ? ' editing' : ''}" data-id="${t.id}">
+          <div class="tx-info">
+            <span class="tx-desc">${esc(t.desc)}${t.fixed ? '<span class="tag">fixo</span>' : ''}</span>
+            <span class="tx-meta">${esc(t.category)} • ${formatDateBR(t.date)}</span>
+          </div>
+          <div class="tx-right">
+            <span class="tx-val ${t.type === 'income' ? 'text-in' : 'text-out'}">${t.type === 'income' ? '+' : '−'} ${formatBRL(t.amount)}</span>
+            <button type="button" class="btn-icon" data-act="edit" title="Editar" aria-label="Editar">✎</button>
+            <button type="button" class="btn-del" data-act="del" title="Excluir" aria-label="Excluir">×</button>
+          </div>
+        </div>`;
+    }
+
+    const sumType = (list, type) => r2(list.filter((t) => t.type === type).reduce((a, t) => a + t.amount, 0));
+
+    function renderLancar() {
+      $('monthLabel').textContent = monthName(viewMonth);
+      const goalEl = $('goalInput');
+      if (document.activeElement !== goalEl) goalEl.value = state.savingsGoal ? String(state.savingsGoal).replace('.', ',') : '0';
+
+      const monthTx = state.transactions.filter((t) => monthOf(t.date) === viewMonth);
+      const totalIncome = sumType(monthTx, 'income');
+      const totalExpense = sumType(monthTx, 'expense');
+      const currentSavings = r2(totalIncome - totalExpense);
+      const goal = state.savingsGoal;
+      const maxAllowedExpense = Math.max(0, r2(totalIncome - goal));
+      const safeRemaining = r2(totalIncome - goal - totalExpense);
+
+      $('kpiIncome').textContent = formatBRL(totalIncome);
+      $('kpiExpense').textContent = formatBRL(totalExpense);
+      const savEl = $('kpiSavings');
+      savEl.textContent = formatBRL(currentSavings);
+      savEl.className = currentSavings >= 0 ? 'text-in' : 'text-out';
+
+      const marginEl = $('safeMarginValue');
+      const subEl = $('heroSubtitle');
+      const barEl = $('budgetProgress');
+      marginEl.textContent = formatBRL(safeRemaining);
+
+      let pctUsed = 0;
+      if (monthTx.length === 0) {
+        marginEl.className = 'hero-value neutral';
+        barEl.style.backgroundColor = '#4ade80';
+        subEl.textContent = 'Nenhum lançamento neste mês. Comece registrando sua renda.';
+      } else if (totalIncome === 0) {
+        pctUsed = 100;
+        marginEl.className = 'hero-value danger';
+        barEl.style.backgroundColor = '#f87171';
+        subEl.textContent = 'Sem entradas neste mês: registre sua renda para calcular o seu limite.';
+      } else {
+        pctUsed = maxAllowedExpense > 0 ? Math.min(100, Math.round((totalExpense / maxAllowedExpense) * 100)) : 100;
+        if (safeRemaining >= Math.max(50, totalIncome * 0.08)) {
+          marginEl.className = 'hero-value safe';
+          barEl.style.backgroundColor = '#4ade80';
+          subEl.textContent = goal > 0
+            ? `Meta de ${formatBRL(goal)} protegida (${pctUsed}% do teto usado).`
+            : `Sem meta definida — ${pctUsed}% da renda do mês já foi gasta.`;
+        } else if (safeRemaining >= 0) {
+          marginEl.className = 'hero-value warn';
+          barEl.style.backgroundColor = '#fbbf24';
+          subEl.textContent = goal > 0
+            ? `Atenção: você está perto do limite para guardar ${formatBRL(goal)}.`
+            : 'Atenção: você está perto de gastar toda a renda do mês.';
+        } else {
+          marginEl.className = 'hero-value danger';
+          barEl.style.backgroundColor = '#f87171';
+          subEl.textContent = `Você ultrapassou o teto em ${formatBRL(Math.abs(safeRemaining))} (sobra atual: ${formatBRL(currentSavings)}).`;
+        }
+      }
+      barEl.style.width = `${pctUsed}%`;
+
+      const catTotals = {};
+      monthTx.filter((t) => t.type === 'expense').forEach((t) => {
+        catTotals[t.category] = r2((catTotals[t.category] || 0) + t.amount);
+      });
+      const sortedCats = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
+      $('categoryBreakdown').innerHTML = sortedCats.length === 0
+        ? '<div class="empty-msg">Nenhuma saída registrada neste mês.</div>'
+        : sortedCats.map(([cat, val]) => {
+            const share = totalExpense > 0 ? Math.round((val / totalExpense) * 100) : 0;
+            return `
+              <div>
+                <div class="cat-item-top"><strong>${esc(cat)}</strong><span>${formatBRL(val)} (${share}%)</span></div>
+                <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:${share}%"></div></div>
+              </div>`;
+          }).join('');
+    }
+
+    function renderHistorico() {
+      const filtered = state.transactions.filter((t) => currentFilter === 'all' || t.type === currentFilter);
+      $('txCount').textContent = `${filtered.length} ${filtered.length === 1 ? 'item' : 'itens'}`;
+
+      if (filtered.length === 0) {
+        $('historyList').innerHTML = `<div class="empty-msg">${state.transactions.length === 0
+          ? 'Nenhum lançamento ainda. Registre o primeiro na aba Lançar.'
+          : 'Nenhum lançamento neste filtro.'}</div>`;
+        return;
+      }
+
+      const groups = {};
+      filtered.forEach((t) => { (groups[monthOf(t.date)] = groups[monthOf(t.date)] || []).push(t); });
+
+      $('historyList').innerHTML = Object.keys(groups).sort().reverse().map((ym) => {
+        const list = groups[ym].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+        const inc = sumType(list, 'income');
+        const exp = sumType(list, 'expense');
+        return `
+          <div class="month-group">
+            <div class="month-head">
+              <strong>${monthName(ym)}</strong>
+              <span>+ ${formatBRL(inc)} &nbsp;·&nbsp; − ${formatBRL(exp)} &nbsp;·&nbsp; saldo ${formatBRL(r2(inc - exp))}</span>
+            </div>
+            <div class="tx-list">${list.map(txRow).join('')}</div>
+          </div>`;
+      }).join('');
+    }
+
+    function render() {
+      renderLancar();
+      renderHistorico();
+    }
+
+    // ---------- eventos ----------
+    document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => setTab(b.dataset.tab)));
+
+    $('btnTypeExpense').addEventListener('click', () => setEntryType('expense'));
+    $('btnTypeIncome').addEventListener('click', () => setEntryType('income'));
+
+    $('catChips').addEventListener('click', (e) => {
+      const b = e.target.closest('.chip');
+      if (!b) return;
+      currentCategory = b.dataset.cat;
+      document.querySelectorAll('#catChips .chip').forEach((c) => c.classList.toggle('active', c === b));
+    });
+
+    $('btnSubmit').addEventListener('click', submitTransaction);
+    ['txAmount', 'txDesc'].forEach((id) => $(id).addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); submitTransaction(); }
+    }));
+    $('btnCancelEdit').addEventListener('click', () => { resetForm(); render(); });
+
+    $('btnPrevMonth').addEventListener('click', () => changeMonth(shiftMonth(viewMonth, -1)));
+    $('btnNextMonth').addEventListener('click', () => changeMonth(shiftMonth(viewMonth, 1)));
+    $('monthLabel').addEventListener('click', () => changeMonth(currentMonth()));
+
+    $('goalInput').addEventListener('change', updateGoal);
+    $('goalInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') e.target.blur(); });
+    $('goalInput').addEventListener('focus', (e) => e.target.select());
+
+    $('filterPills').addEventListener('click', (e) => {
+      const b = e.target.closest('.pill');
+      if (!b) return;
+      currentFilter = b.dataset.filter;
+      document.querySelectorAll('.pill').forEach((p) => p.classList.toggle('active', p === b));
+      render();
+    });
+
+    $('historyList').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-act]');
+      const row = e.target.closest('.tx-item');
+      if (!btn || !row) return;
+      const id = Number(row.dataset.id);
+      if (btn.dataset.act === 'del') deleteTransaction(id);
+      else startEdit(id);
+    });
+
+    $('btnLinkMain').addEventListener('click', onLinkMainClick);
+    $('btnUnlink').addEventListener('click', unlinkFile);
+    $('btnExport').addEventListener('click', exportBackup);
+    $('btnImport').addEventListener('click', () => $('importFile').click());
+    $('importFile').addEventListener('change', (e) => { importBackup(e.target.files[0]); e.target.value = ''; });
+    $('btnNewMonth').addEventListener('click', startNewMonth);
+    $('btnClearAll').addEventListener('click', clearAll);
+
+    // ---------- início ----------
+    if (!storageOk) $('storageNotice').classList.remove('hidden');
+    setTab('lancar');
+    setEntryType('expense');
+    resetForm();
+    render();
+    renderLinkStatus();
+    restoreLink();
+  </script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    });
+  }
+</script>
+</body>
+</html>
